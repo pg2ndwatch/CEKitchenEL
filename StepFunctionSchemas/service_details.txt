@@ -1,0 +1,67 @@
+
+[LAMBDAS]
+ElTableParamVerifier_lambda: arn:aws:lambda:us-east-2:496900223991:function:ElTableParamVerifier_lambda
+ElTableRunner_lambda: arn:aws:lambda:us-east-2:496900223991:function:ElTableRunner_lambda
+
+
+
+[BUILD COMMANDS]
+# move to project source directory
+cd ~/PycharmProjects/CEKitchenEL
+
+#active the python vm directory
+source CEKitchenEL/bin/activate
+
+#run t he docker build
+docker build -t ce-kitchen-el .
+docker push 496900223991.dkr.ecr.us-east-2.amazonaws.com/ce-kitchen-el:latest
+docker run -p 8080:8080 -p 8443:8443 ce-kitchen-el
+curl -X POST -H "Content-Type: application/json" -d '{"log_level": "debug"}' "http://localhost:8080/2015-03-31/functions/function/invocations"
+
+
+aws ecr create-repository --repository-name ce-kitchen-el --image-scanning-configuration scanOnPush=true
+
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 496900223991.dkr.ecr.us-east-2.amazonaws.com
+
+docker tag ce-kitchen-el:latest 496900223991.dkr.ecr.us-east-2.amazonaws.com/ce-kitchen-el:latest
+
+docker push 496900223991.dkr.ecr.us-east-2.amazonaws.com/ce-kitchen-el:latest
+
+
+
+
+
+
+aws ecr get-login-password --region us-east-2 | docker login --username AWS --password-stdin 496900223991.dkr.ecr.us-east-2.amazonaws.com
+aws ecr create-repository --repository-name ce-kitchen-el1 --image-scanning-configuration scanOnPush=true
+docker tag ce-kitchen-el:latest 496900223991.dkr.ecr.us-east-2.amazonaws.com/ce-kitchen-el1:latest
+
+
+
+
+# step 1: Retrieve an authentication token and authenticate your Docker client to your registry.
+# Use the AWS CLI:
+aws ecr get-login-password --region $REGION} | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+
+
+# step 2: Build your Docker image using the following command. For information on building a Docker file from scratch see the instructions here 
+# http://docs.aws.amazon.com/AmazonECS/latest/developerguide/docker-basics.html.
+#You can skip this step if your image is already built
+docker build -t ce-kitchen-el .
+
+
+# step 3a: Run image locally to test build. 
+docker run -p 8080:8080 -p 8443:8443 ce-kitchen-el
+ 
+#step 3b: Test image
+curl -X POST -H "Content-Type: application/json" -d '{"log_level": "debug"}' "http://localhost:8080/2015-03-31/functions/function/invocations"
+
+#step 3c
+docker stop $CONTAINERID
+
+
+#step 4: After the build and testing are done, tag your image so you can push the image to this repository:
+docker tag ce-kitchen-el:latest $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/ce-kitchen-el:latest
+
+#step 5:  
+docker push $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/ce-kitchen-el:latest

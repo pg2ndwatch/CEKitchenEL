@@ -1,0 +1,73 @@
+{
+  "Comment": "A Hello World example of the Amazon States Language using Pass states",
+  "StartAt": "ElTableParamVerifier_Lambda_invoker",
+  "States": {
+    "ElTableParamVerifier_Lambda_invoker": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-2:496900223991:function:ElTableParamVerifier_lambda",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "UnTrappedErrorFailState"
+        }
+      ],
+      "Next": "ElTableParamVerifier_result_splitter"
+    },
+    "ElTableParamVerifier_result_splitter": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Not": {
+            "Variable": "$.statusCode",
+            "NumericEquals": 200
+          },
+          "Next": "TrappedErrorFailState"
+        },
+        {
+          "Variable": "$.statusCode",
+          "NumericEquals": 200,
+          "Next": "ElTableRunner_Lambda_filter"
+        }
+      ],
+      "Default": "DefaultErrorFailState"
+    },
+    "ElTableRunner_Lambda_filter": {
+      "Type": "Pass",
+      "InputPath": "$.body.event_return",
+      "Next": "ElTableRunner_Lambda_invoker"
+    },
+    "ElTableRunner_Lambda_invoker": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-2:496900223991:function:ElTableRunner_lambda",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "UnTrappedErrorFailState"
+        }
+      ],
+      "Next": "SuccessState"
+    },
+    "TrappedErrorFailState": {
+      "Type": "Fail",
+      "Cause": "$.statusCode.body.status_message",
+      "Error": "ErrorA"
+    },
+    "DefaultErrorFailState": {
+      "Type": "Fail",
+      "Cause": "Invalid response.",
+      "Error": "ErrorA"
+    },
+    "UnTrappedErrorFailState": {
+      "Type": "Fail",
+      "Cause": "Invalid response.",
+      "Error": "ErrorA"
+    },
+    "SuccessState": {
+      "Type": "Succeed"
+    }
+  }
+}
