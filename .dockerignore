@@ -1,0 +1,8 @@
+#Ignore the logs directory
+
+.git
+.gitignore
+.idea
+main.py
+scratch.ipynb
+venv/
